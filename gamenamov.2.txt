@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f0c29">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>เกมกวนตีน</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;font-family:sans-serif;color:#fff;text-align:center;
+background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);background-attachment:fixed;overflow-x:hidden}
+.bg{position:fixed;inset:0;pointer-events:none;z-index:0}
+.bg span{position:absolute;bottom:-60px;font-size:30px;opacity:.25;animation:up linear infinite}
+@keyframes up{to{transform:translateY(-110vh) rotate(360deg)}}
+#app{position:relative;z-index:1;padding:24px 16px 80px;max-width:480px;margin:auto}
+.logo{font-size:64px;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-10px) rotate(8deg)}}
+h1{margin:6px 0;font-size:34px;background:linear-gradient(90deg,#ffc828,#ff4d8d);-webkit-background-clip:text;color:transparent}
+.sub{opacity:.7;margin-bottom:24px}
+.card{display:flex;align-items:center;gap:14px;width:100%;margin:12px 0;padding:16px;text-align:left;color:#fff;
+background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;
+backdrop-filter:blur(8px);font-size:16px;transition:.15s}
+.card:active{transform:scale(.96);background:rgba(255,255,255,.2)}
+.card .ic{font-size:40px}
+.card b{display:block;font-size:20px}
+.card small{opacity:.7}
+.btn{font-size:20px;padding:14px 22px;border:0;border-radius:14px;color:#000;font-weight:bold;
+background:linear-gradient(90deg,#ffc828,#ff8c42);margin:8px}
+.opt{display:block;width:100%;margin:10px 0;padding:16px;font-size:20px;color:#fff;border-radius:16px;
+background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25)}
+#back{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:5;
+padding:12px 22px;border-radius:30px;border:0;background:#ff4d8d;color:#fff;font-size:16px;font-weight:bold}
+.pill{display:inline-block;padding:4px 14px;border-radius:20px;background:rgba(255,255,255,.15);margin:4px}
+.ver{margin-top:30px;opacity:.4;font-size:12px}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"></div>
+<div id="app">
+  <div id="menu">
+    <div class="logo">🤡</div>
+    <h1>เกมกวนตีน</h1>
+    <div class="sub">เลือกเกม แล้วเตรียมโดนกวน 😈</div>
+    <div id="list"></div>
+    <div class="ver">v1.0 • เล่นกับเพื่อน</div>
+  </div>
+  <div id="game" style="display:none"></div>
+</div>
+<button id="back" onclick="toMenu()">⬅ กลับเมนู</button>
+
+<script>
+const $ = id => document.getElementById(id);
+let timer;
+
+/* ===== รายชื่อเกม: เพิ่มเกมใหม่แค่เติมบรรทัดในนี้ ===== */
+const games = [
+  {ic:"🖱️", name:"เกมกดปุ่มหนี", desc:"ปุ่มวิ่งหนีนิ้วคุณ", run:()=>startClick()},
+  {ic:"❓", name:"เกมตอบคำถามกวนประสาท", desc:"ตัวเลือกสลับที่ตลอด", run:()=>startQuiz()},
+];
+
+/* พื้นหลังลอย */
+["🤡","😈","😏","💀","🙄","🔥"].forEach((e,i)=>{
+  for(let k=0;k<2;k++){
+    const s=document.createElement("span");
+    s.textContent=e;
+    s.style.left=Math.random()*95+"%";
+    s.style.animationDuration=(10+Math.random()*12)+"s";
+    s.style.animationDelay=(-Math.random()*15)+"s";
+    $("bg").appendChild(s);
+  }
+});
+
+/* สร้างการ์ดเมนู */
+games.forEach(g=>{
+  const b=document.createElement("button");
+  b.className="card";
+  b.innerHTML='<span class="ic">'+g.ic+'</span><span><b>'+g.name+'</b><small>'+g.desc+'</small></span>';
+  b.onclick=g.run;
+  $("list").appendChild(b);
+});
+
+function show(html){
+  $("menu").style.display="none";
+  $("game").style.display="block";
+  $("back").style.display="block";
+  $("game").innerHTML=html;
+}
+function toMenu(){
+  clearInterval(timer);
+  $("game").style.display="none";
+  $("back").style.display="none";
+  $("menu").style.display="block";
+}
+
+/* ===== เกมกดปุ่มหนี ===== */
+function startClick(){
+  let n=0;
+  const m=["ช้าไปนะ 😏","เกือบแล้ว~ (โกหก)","มือสั่นเหรอ?","ปุ่มไม่อยากให้กด","ลองอีกทีนะ 🤡"];
+  show('<h2>🖱️ กดให้ครบ 10 ครั้ง</h2><div class="pill" id="t">เริ่มเลย!</div><button class="btn" id="b" style="position:fixed;left:35%;top:250px">กดเลย</button>');
+  const b=$("b"), t=$("t");
+  const mv=()=>{
+    b.style.left=Math.random()*(innerWidth-110)+"px";
+    b.style.top=200+Math.random()*(innerHeight-350)+"px";
+  };
+  b.ontouchstart=b.onmouseover=()=>{ if(Math.random()<0.7) mv(); };
+  b.onclick=()=>{
+    n++;
+    t.innerText=m[Math.floor(Math.random()*m.length)]+" ("+n+"/10)";
+    if(n>=10){ alert("ชนะแล้ว! ...ล้อเล่น เริ่มใหม่ 😈"); n=0; }
+    mv();
+  };
+}
+
+/* ===== เกมตอบคำถาม ===== */
+function startQuiz(){
+  const qs=[
+    ["1 + 1 = ?",["2","11","หน้าต่าง"],0],
+    ["ประเทศไทยมีกี่จังหวัด?",["77","76","เยอะมาก"],0],
+    ["เมืองหลวงของญี่ปุ่นคือ?",["โตเกียว","โอซาก้า","ไม่บอก"],0],
+    ["ข้อไหนคือคำตอบที่ถูก?",["ข้อนี้","ข้อนั้น","ไม่มีข้อไหนถูก"],2]
+  ];
+  const wrong=["ผิด! โง่จัง 🤡","มั่นใจมากนะ ผิดอ่ะ 😂","ใกล้เคียง (ไม่เลย)","สมองอยู่ไหนเนี่ย 🧠❓","ผิด แต่น่ารักดี 🙄"];
+  const fake=["ถูก! ...แต่ขอถามใหม่อีกรอบ ไม่เชื่อ 😈","เกือบถูก ลองยืนยันอีกที!","ถูกนะ แต่แอบเปลี่ยนใจแล้ว กดใหม่"];
+  let q=0, score=0, tricked=false, order=[0,1,2];
+  function render(msg){
+    const [text,opts]=qs[q];
+    let h='<div class="pill">ข้อ '+(q+1)+'/'+qs.length+'</div><div class="pill">⭐ '+score+'</div><h2>'+text+'</h2><p style="min-height:24px">'+(msg||"")+'</p>';
+    order.forEach(i=>{ h+='<button class="opt" onclick="ans('+i+')">'+opts[i]+'</button>'; });
+    $("game").innerHTML=h;
+  }
+  window.ans=function(i){
+    if(i===qs[q][2]){
+      if(!tricked && Math.random()<0.6){ tricked=true; return render(fake[Math.floor(Math.random()*fake.length)]); }
+      score++; q++; tricked=false;
+      if(q>=qs.length){
+        clearInterval(timer);
+        $("game").innerHTML='<div class="logo">🏁</div><h2>จบเกม</h2><h3>คุณได้ '+score+'/'+qs.length+'</h3><p>'+(score==qs.length?"เก่งนะ... แต่เราจะบอกว่าได้ 0 เพราะเราไม่ชอบหน้าคุณ 😝":"ไปฝึกมาใหม่นะ 🤣")+'</p><button class="btn" onclick="startQuiz()">เล่นใหม่ (ถ้าไหว)</button>';
+        return;
+      }
+      render("ถูก! ข้อต่อไป อย่าเพิ่งดีใจ 😏");
+    } else {
+      if(score>0 && Math.random()<0.3) score--;
+      render(wrong[Math.floor(Math.random()*wrong.length)]);
+    }
+  };
+  show("");
+  render("ตอบให้ดีล่ะ ตัวเลือกจะสลับที่เรื่อย ๆ 😈");
+  clearInterval(timer);
+  timer=setInterval(()=>{ order.sort(()=>Math.random()-0.5); render(); },2500);
+}
+
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
